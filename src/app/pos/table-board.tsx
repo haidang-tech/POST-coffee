@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CircleAlert, Loader2 } from "lucide-react";
+import { Armchair, CircleAlert, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { openTableAction } from "./actions";
 import { Badge, EmptyState } from "@/components/ui/card";
@@ -27,6 +27,7 @@ export function TableBoard({
   const [pending, startTransition] = useTransition();
   const [busyTable, setBusyTable] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedArea, setSelectedArea] = useState("all");
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showError = useCallback((message: string) => {
@@ -86,11 +87,13 @@ export function TableBoard({
     const list = areas.length
       ? areas
       : [{ id: "none", name: "Khu vực", sort_order: 0 } as Area];
-    return list.map((area) => ({
-      area,
-      tables: tables.filter((table) => !areas.length || table.area_id === area.id),
-    }));
-  }, [areas, tables]);
+    return list
+      .filter((area) => selectedArea === "all" || area.id === selectedArea)
+      .map((area) => ({
+        area,
+        tables: tables.filter((table) => !areas.length || table.area_id === area.id),
+      }));
+  }, [areas, tables, selectedArea]);
 
   function openOrView(table: CoffeeTable) {
     setError(null);
@@ -142,88 +145,102 @@ export function TableBoard({
         </div>
       ) : null}
 
-      <div className="space-y-8">
-        {grouped.map(({ area, tables: areaTables }) =>
-          areaTables.length === 0 ? null : (
-            <section key={area.id}>
-              <div className="mb-3 flex items-center gap-3">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-coffee-700">
-                  {area.name}
-                </h2>
-                <span className="text-[11px] text-mocha-400">
-                  {areaTables.length} bàn
-                </span>
-                <span className="h-px flex-1 bg-cream-200" />
-              </div>
+      <div className="space-y-5 rounded-2xl border border-cream-200 bg-white p-3 shadow-sm sm:p-5">
+        {areas.length > 1 ? (
+          <div
+            className="flex gap-2 overflow-x-auto border-b border-cream-200 pb-3"
+            aria-label="Chọn khu vực"
+          >
+            {[
+              { id: "all", name: "Tất cả" },
+              ...areas.map(({ id, name }) => ({ id, name })),
+            ].map((area) => (
+              <button
+                key={area.id}
+                type="button"
+                aria-pressed={selectedArea === area.id}
+                onClick={() => setSelectedArea(area.id)}
+                className={cn(
+                  "min-h-10 shrink-0 rounded-lg border px-4 text-sm font-medium transition-colors",
+                  selectedArea === area.id
+                    ? "border-coffee-800 bg-coffee-800 text-white"
+                    : "border-cream-200 bg-white text-coffee-700 hover:bg-cream-50",
+                )}
+              >
+                {area.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {areaTables.map((table) => {
-                  const order = orderByTable.get(table.id);
-                  const isBusy = Boolean(order) || table.status === "busy";
-                  const isLoading = pending && busyTable === table.id;
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-mocha-400">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-success-500" />
+            Trống
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-danger-500" />
+            Đang mở
+          </span>
+        </div>
 
-                  return (
-                    <div
-                      key={table.id}
-                      className={cn(
-                        "group relative flex min-h-40 flex-col overflow-hidden rounded-2xl border-2 transition-all duration-200 sm:min-h-44",
-                        isBusy &&
-                          "border-coffee-800 bg-coffee-800 text-cream-50 shadow-[0_8px_20px_rgba(23,36,26,0.18)] hover:shadow-[0_12px_24px_rgba(23,36,26,0.24)]",
-                        !isBusy &&
-                          "border-cream-300 bg-white shadow-[0_4px_14px_rgba(23,36,26,0.10)] hover:-translate-y-0.5 hover:border-success-500 hover:shadow-[0_10px_22px_rgba(23,36,26,0.16)]",
-                      )}
-                    >
+        <div className="space-y-6">
+          {grouped.map(({ area, tables: areaTables }) =>
+            areaTables.length === 0 ? null : (
+              <section key={area.id}>
+                {areas.length > 1 ? (
+                  <div className="mb-3 flex items-center gap-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-coffee-700">
+                      {area.name}
+                    </h2>
+                    <span className="h-px flex-1 bg-cream-200" />
+                  </div>
+                ) : null}
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {areaTables.map((table) => {
+                    const order = orderByTable.get(table.id);
+                    const isBusy = Boolean(order) || table.status === "busy";
+                    const isLoading = pending && busyTable === table.id;
+
+                    return (
                       <button
+                        key={table.id}
                         type="button"
                         onClick={() => openOrView(table)}
                         disabled={pending}
-                        className="flex flex-1 flex-col items-start gap-3 p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-600 disabled:opacity-70 sm:p-4"
-                      >
-                        <div className="flex w-full items-start justify-between gap-2">
-                          <span
-                            className={cn(
-                              "text-xl font-semibold tracking-tight",
-                              isBusy ? "text-cream-50" : "text-coffee-900",
-                            )}
-                          >
-                            {table.name}
-                          </span>
-                          {isLoading ? (
-                            <Loader2
-                              className={cn(
-                                "h-4 w-4 animate-spin",
-                                isBusy ? "text-cream-100" : "text-mocha-400",
-                              )}
-                            />
-                          ) : (
-                            <Badge
-                              tone={isBusy ? "accent" : "neutral"}
-                              className={isBusy ? "border-cream-200/25" : ""}
-                            >
-                              {isBusy ? "Đang mở" : "Trống"}
-                            </Badge>
-                          )}
-                        </div>
-
-                        {order ? (
-                          <div className="mt-auto w-full border-t border-cream-200/20 pt-2.5">
-                            <span className="text-xs font-medium text-cream-100">
-                              Chọn để thêm món
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="mt-auto text-xs font-medium text-mocha-400">
-                            Chọn bàn để thêm món
-                          </span>
+                        aria-label={`Bàn ${table.name}, ${isBusy ? "đang mở" : "trống"}`}
+                        className={cn(
+                          "flex min-h-36 flex-col items-center justify-center gap-2 rounded-xl border-2 bg-white p-3 text-center shadow-[0_3px_12px_rgba(23,36,26,0.10)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_18px_rgba(23,36,26,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:ring-offset-2 disabled:opacity-70 sm:min-h-40",
+                          isBusy
+                            ? "border-danger-500/60 hover:border-danger-500"
+                            : "border-success-500/70 hover:border-success-500",
                         )}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-6 w-6 animate-spin text-accent-600" />
+                        ) : (
+                          <Armchair
+                            className={cn(
+                              "h-6 w-6",
+                              isBusy ? "text-danger-500" : "text-coffee-600",
+                            )}
+                          />
+                        )}
+                        <span className="text-base font-semibold text-coffee-900">
+                          {table.name}
+                        </span>
+                        <Badge tone={isBusy ? "danger" : "success"}>
+                          {isBusy ? "Đang mở" : "Trống"}
+                        </Badge>
                       </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          ),
-        )}
+                    );
+                  })}
+                </div>
+              </section>
+            ),
+          )}
+        </div>
       </div>
     </div>
   );
