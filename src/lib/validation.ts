@@ -3,7 +3,9 @@ import { z } from "zod";
 const uuid = z.string().uuid();
 
 export const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().pipe(z.email("Email không hợp lệ")),
+  email: z.string().trim().toLowerCase()
+    .transform((value) => value === "admin" ? "admin@postcoffee.vn" : value)
+    .pipe(z.email("Nhập tên đăng nhập admin hoặc email hợp lệ")),
   password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự").max(72),
 });
 

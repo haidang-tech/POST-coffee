@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Coffee, Loader2, LockKeyhole, Mail } from "lucide-react";
+import { Coffee, Loader2, LockKeyhole, UserRound } from "lucide-react";
 import { signInAction, type LoginState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,17 +19,19 @@ export function LoginForm() {
           htmlFor="email"
           className="mb-1.5 block text-xs font-semibold text-coffee-700"
         >
-          Email
+          Tên đăng nhập hoặc email
         </label>
         <div className="relative">
-          <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-mocha-400" />
+          <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-mocha-400" />
           <Input
             id="email"
             name="email"
-            type="email"
-            autoComplete="email"
+            type="text"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             required
-            placeholder="ten@postcoffee.vn"
+            placeholder="admin hoặc ten@postcoffee.vn"
             className="pl-10"
           />
         </div>
