@@ -18,22 +18,14 @@ export default async function PosPage() {
       .order("name"),
     supabase
       .from("orders")
-      .select("id, code, table_id, total, created_at, order_items(id)")
-      .eq("status", "open")
-      .order("created_at"),
+      .select("id, table_id")
+      .eq("status", "open"),
   ]);
 
-  const openOrders = (ordersRes.data ?? []).map((row) => {
-    const items = (row.order_items ?? []) as { id: string }[];
-    return {
-      id: row.id as string,
-      code: row.code as string,
-      table_id: row.table_id as string | null,
-      total: row.total as number,
-      created_at: row.created_at as string,
-      itemCount: items.length,
-    };
-  });
+  const openOrders = (ordersRes.data ?? []).map((row) => ({
+    id: row.id,
+    table_id: row.table_id,
+  }));
 
   return (
     <main className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-8">
