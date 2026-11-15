@@ -45,6 +45,8 @@ export function TableBoard({
   const [pending, startTransition] = useTransition();
   const [busyTable, setBusyTable] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<CoffeeTable["status"] | "all">("all");
+  const [areaFilter, setAreaFilter] = useState("all");
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showError = useCallback((message: string) => {
@@ -63,11 +65,21 @@ export function TableBoard({
   useEffect(() => {
     const supabase = createClient();
     let timeout: ReturnType<typeof setTimeout> | null = null;
+    let dirty = false;
 
     const schedule = () => {
+      dirty = true;
       if (timeout) clearTimeout(timeout);
-      timeout = setTimeout(() => router.refresh(), 350);
+      if (document.hidden) return;
+      timeout = setTimeout(() => {
+        dirty = false;
+        startTransition(() => router.refresh());
+      }, 500);
     };
+    const onVisible = () => {
+      if (!document.hidden && dirty) schedule();
+    };
+    document.addEventListener("visibilitychange", onVisible);
 
     const channel = supabase
       .channel("pos-table-board")
@@ -77,6 +89,7 @@ export function TableBoard({
 
     return () => {
       if (timeout) clearTimeout(timeout);
+      document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(channel);
     };
   }, [router]);
@@ -93,20 +106,21 @@ export function TableBoard({
     const list = areas.length
       ? areas
       : [{ id: "none", name: "Khu vực", sort_order: 0 } as Area];
-    return list.map((area) => ({
+    return list.filter((area) => areaFilter === "all" || area.id === areaFilter).map((area) => ({
       area,
       tables: tables.filter((table) =>
-        areas.length ? table.area_id === area.id : true,
+        (!areas.length || table.area_id === area.id) &&
+        (statusFilter === "all" || (orderByTable.has(table.id) ? "busy" : table.status) === statusFilter),
       ),
     }));
-  }, [areas, tables]);
+  }, [areas, tables, areaFilter, statusFilter, orderByTable]);
 
   const stats = useMemo(() => {
-    const busy = tables.filter((t) => t.status === "busy").length;
-    const reserved = tables.filter((t) => t.status === "reserved").length;
+    const busy = tables.filter((t) => orderByTable.has(t.id) || t.status === "busy").length;
+    const reserved = tables.filter((t) => !orderByTable.has(t.id) && t.status === "reserved").length;
     const openRevenue = openOrders.reduce((sum, order) => sum + order.total, 0);
     return { busy, reserved, empty: tables.length - busy - reserved, openRevenue };
-  }, [tables, openOrders]);
+  }, [tables, openOrders, orderByTable]);
 
   function openOrView(table: CoffeeTable) {
     setError(null);
@@ -139,7 +153,7 @@ export function TableBoard({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="space-y-6">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-accent-600">
             Ca làm việc
@@ -150,7 +164,7 @@ export function TableBoard({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatPill
             icon={<Users className="h-3.5 w-3.5" />}
             label="Có khách"
@@ -197,6 +211,22 @@ export function TableBoard({
         </div>
       ) : null}
 
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cream-200 bg-white p-3">
+        <div className="flex flex-wrap gap-1" aria-label="Lọc trạng thái bàn">
+          {([['all', 'Tất cả'], ['empty', 'Trống'], ['busy', 'Có khách'], ['reserved', 'Đặt trước']] as const).map(([value, label]) => (
+            <button key={value} type="button" aria-pressed={statusFilter === value}
+              onClick={() => setStatusFilter(value)}
+              className={cn("rounded-xl px-3 py-2 text-xs font-semibold transition-colors", statusFilter === value ? "bg-coffee-800 text-white" : "text-mocha-400 hover:bg-cream-100")}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <select aria-label="Lọc khu vực" value={areaFilter} onChange={(event) => setAreaFilter(event.target.value)} className="h-10 rounded-xl border border-cream-200 bg-cream-50 px-3 text-sm text-coffee-700">
+          <option value="all">Tất cả khu vực</option>
+          {areas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
+        </select>
+      </div>
+      {tables.length > 0 && grouped.every((group) => group.tables.length === 0) && <EmptyState title="Không có bàn phù hợp" description="Chọn trạng thái hoặc khu vực khác để xem bàn." />}
       <div className="space-y-8">
         {grouped.map(({ area, tables: areaTables }) =>
           areaTables.length === 0 ? null : (
@@ -221,11 +251,11 @@ export function TableBoard({
                     <div
                       key={table.id}
                       className={cn(
-                        "group relative flex flex-col overflow-hidden rounded-2xl border transition-all",
+                        "group relative flex min-h-44 flex-col overflow-hidden rounded-2xl border transition-colors",
                         status === "busy" &&
                           "border-coffee-800 bg-coffee-800 text-cream-50 shadow-md",
                         status === "empty" &&
-                          "border-cream-200 bg-white hover:-translate-y-0.5 hover:border-mocha-300 hover:shadow-md",
+                          "border-cream-200 bg-white hover:border-success-500 hover:shadow-sm",
                         status === "reserved" &&
                           "border-accent-500/35 bg-accent-500/8",
                       )}
@@ -239,7 +269,7 @@ export function TableBoard({
                         <div className="flex w-full items-start justify-between gap-2">
                           <span
                             className={cn(
-                              "font-display text-xl font-semibold",
+                              "text-xl font-semibold tracking-tight",
                               status === "busy" ? "text-cream-50" : "text-coffee-900",
                             )}
                           >
@@ -367,13 +397,13 @@ function StatPill({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-xl border px-3 py-2",
+        "relative flex flex-wrap items-center gap-2 rounded-2xl border p-4 sm:p-5",
         tones[tone],
       )}
     >
       {icon}
       <span className="text-[11px] font-medium opacity-80">{label}</span>
-      <span className="text-sm font-semibold tabular-nums">{value}</span>
+      <span className="mt-2 block w-full text-2xl font-semibold tracking-tight tabular-nums">{value}</span>
     </div>
   );
 }

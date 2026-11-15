@@ -13,7 +13,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
-      <aside className="print-hidden sticky top-0 hidden h-dvh flex-col border-r border-cream-200 bg-white px-4 py-6 lg:flex">
+      <aside className="print-hidden sticky top-0 hidden h-dvh flex-col border-r border-cream-200 bg-white px-5 py-8 lg:flex">
         <Link href="/admin" className="flex items-center gap-2.5 px-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-coffee-800 text-cream-50">
             <Coffee className="h-4 w-4" />
@@ -57,7 +57,7 @@ export default async function AdminLayout({
       </aside>
 
       <div className="min-w-0">
-        <header className="print-hidden sticky top-0 z-30 border-b border-cream-200 bg-cream-50/95 backdrop-blur lg:hidden">
+        <header className="print-hidden sticky top-0 z-30 border-b border-cream-200 bg-white lg:hidden">
           <div className="flex items-center justify-between px-4 py-3">
             <Link href="/admin" className="flex items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-coffee-800 text-cream-50">

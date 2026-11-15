@@ -17,7 +17,7 @@ function invalid(): ActionResult {
 function refresh() {
   revalidatePath("/pos");
   revalidatePath("/admin");
-  revalidatePath("/admin/orders");
+  revalidatePath("/admin/don-hang");
 }
 
 export async function openTableAction(

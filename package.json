@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test:order-preview": "node scripts/check-order-preview.mjs",
     "db:push": "node scripts/db.mjs supabase/schema.sql",
     "db:sql": "node scripts/db.mjs",
     "admin:create": "node scripts/create-admin.mjs"

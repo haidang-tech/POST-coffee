@@ -13,7 +13,7 @@ export default async function PosLayout({
 
   return (
     <div className="min-h-dvh">
-      <header className="print-hidden sticky top-0 z-30 border-b border-cream-200 bg-cream-50/90 backdrop-blur">
+      <header className="print-hidden sticky top-0 z-30 border-b border-cream-200 bg-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link href="/pos" className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-coffee-800 text-cream-50">

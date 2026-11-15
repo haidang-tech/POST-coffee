@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
 import {
   ArrowLeft,
   ArrowRightLeft,
@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { cn, formatTimeVN, vnd } from "@/lib/utils";
+import { previewOrder, searchText } from "@/lib/order-preview";
 import type { Category, MenuItem, Order, OrderItem } from "@/lib/types";
 import {
   addItemAction,
@@ -53,7 +54,7 @@ const QUICK_DISCOUNTS = [0, 5_000, 10_000, 20_000, 50_000];
 
 export function OrderScreen({
   order,
-  items,
+  items: serverItems,
   categories,
   menuItems,
   tables,
@@ -67,12 +68,17 @@ export function OrderScreen({
   openOrders: OpenOrderOption[];
 }) {
   const router = useRouter();
+  const [items, preview] = useOptimistic(serverItems, previewOrder);
   const [pending, startTransition] = useTransition();
   const [addingId, setAddingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
+  const searchableMenu = useMemo(() => menuItems.map((item) => ({
+    item, text: searchText(`${item.name} ${item.description}`),
+  })), [menuItems]);
   const [categoryId, setCategoryId] = useState<string>("all");
   const [showBill, setShowBill] = useState(false);
 
@@ -99,16 +105,15 @@ export function OrderScreen({
   const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
 
   const filteredMenu = useMemo(() => {
-    const keyword = query.trim().toLowerCase();
-    return menuItems.filter((item) => {
+    const keyword = searchText(deferredQuery.trim());
+    return searchableMenu.filter(({ item, text }) => {
       const matchCategory = categoryId === "all" || item.category_id === categoryId;
       const matchKeyword =
         !keyword ||
-        item.name.toLowerCase().includes(keyword) ||
-        item.description.toLowerCase().includes(keyword);
+        text.includes(keyword);
       return matchCategory && matchKeyword;
-    });
-  }, [menuItems, categoryId, query]);
+    }).map(({ item }) => item);
+  }, [searchableMenu, categoryId, deferredQuery]);
 
   const groupedMenu = useMemo(() => {
     const map = new Map<string, MenuItem[]>();
@@ -131,6 +136,11 @@ export function OrderScreen({
     if (pending) return;
     setAddingId(item.id);
     startTransition(async () => {
+      preview({ type: "add", item: {
+        id: `preview-${item.id}`, order_id: order.id, menu_item_id: item.id,
+        name_snapshot: item.name, unit_price: item.price, qty: 1, note: "",
+        created_at: new Date().toISOString(),
+      } });
       const result = await addItemAction(order.id, item.id, 1);
       setAddingId(null);
       if (!result.ok) showError(result.error);
@@ -140,6 +150,7 @@ export function OrderScreen({
   function changeQty(item: OrderItem, qty: number) {
     if (pending || qty < 0 || qty > 99) return;
     startTransition(async () => {
+      preview({ type: "quantity", id: item.id, qty });
       const result = await updateItemQtyAction(order.id, item.id, qty);
       if (!result.ok) showError(result.error);
     });
@@ -178,7 +189,6 @@ export function OrderScreen({
         return;
       }
       setMoveOpen(false);
-      router.refresh();
     });
   }
 
@@ -271,13 +281,13 @@ export function OrderScreen({
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         {/* Menu */}
         <section className="space-y-3">
-          <div className="rounded-2xl border border-cream-200 bg-white p-3">
+          <div className="sticky top-[4.5rem] z-10 rounded-2xl border border-cream-200 bg-white p-3 shadow-sm">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-mocha-400" />
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Tìm món…"
+                placeholder="Tìm món, ví dụ: ca phe, nuoc ep…"
                 className="border-transparent bg-cream-50 pl-10 focus:border-coffee-500 focus:bg-white"
                 aria-label="Tìm món"
               />
@@ -324,18 +334,19 @@ export function OrderScreen({
                           type="button"
                           onClick={() => addItem(item)}
                           disabled={pending}
-                          className="group flex w-full items-center gap-3 rounded-xl border border-cream-200 bg-white p-2.5 text-left transition-all hover:border-mocha-300 hover:shadow-sm disabled:opacity-60"
+                          className="group flex min-h-24 w-full items-center gap-3 rounded-2xl border border-cream-200 bg-white p-3 text-left transition-colors hover:border-accent-500 hover:bg-cream-50 disabled:opacity-70"
                         >
                           {item.image_url ? (
                             <Image
                               src={item.image_url}
                               alt=""
-                              width={48}
-                              height={48}
-                              className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                              width={72}
+                              height={72}
+                              sizes="72px"
+                              className="h-[72px] w-[72px] shrink-0 rounded-xl object-cover"
                             />
                           ) : (
-                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-cream-100 text-mocha-400">
+                            <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-xl bg-cream-100 text-mocha-400">
                               <ReceiptText className="h-4 w-4" />
                             </span>
                           )}
@@ -404,7 +415,7 @@ export function OrderScreen({
         >
           <div className="flex items-center justify-between gap-2 border-b border-cream-200 px-4 py-3">
             <div>
-              <h2 className="text-sm font-semibold text-coffee-900">Đơn hiện tại</h2>
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-coffee-900">Đơn hiện tại {pending && <span role="status" className="text-xs font-normal text-accent-600">Đang lưu…</span>}</h2>
               <p className="text-[11px] text-mocha-400">
                 Bàn {order.table_label} · {order.code}
               </p>

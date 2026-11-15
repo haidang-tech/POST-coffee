@@ -22,16 +22,8 @@ export default async function OrderPage({
 
   const supabase = await createClient();
 
-  const { data: orderRow } = await supabase
-    .from("orders")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (!orderRow) notFound();
-  const order = orderRow as Order;
-
-  const [itemsRes, categoriesRes, menuRes, tablesRes, openRes] = await Promise.all([
+  const [orderRes, itemsRes, categoriesRes, menuRes, tablesRes, openRes] = await Promise.all([
+    supabase.from("orders").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("order_items")
       .select("*")
@@ -57,6 +49,8 @@ export default async function OrderPage({
       .order("created_at"),
   ]);
 
+  if (!orderRes.data) notFound();
+  const order = orderRes.data as Order;
   const items = (itemsRes.data ?? []) as OrderItem[];
   const categories = (categoriesRes.data ?? []) as Category[];
   const menuItems = (menuRes.data ?? []) as MenuItem[];

@@ -43,11 +43,12 @@ export function AdminNav({ variant = "sidebar" }: { variant?: "sidebar" | "bar" 
           <Link
             key={item.href}
             href={item.href}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
               variant === "bar" && "shrink-0 py-2",
               active
-                ? "bg-coffee-800 text-cream-50"
+                ? "bg-coffee-800 text-cream-50 shadow-sm"
                 : "text-coffee-700 hover:bg-cream-100",
             )}
           >
