@@ -1,8 +1,7 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
-import { useMemo, useRef, useState, useTransition } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   CircleAlert,
   ImagePlus,
@@ -78,6 +77,12 @@ export function MenuManager({
   const [confirm, setConfirm] = useState<
     { type: "item" | "category"; id: string; name: string } | null
   >(null);
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
 
   const categoryNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -295,9 +300,11 @@ export function MenuManager({
                   className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-cream-50"
                 >
                   {item.image_url ? (
-                    <img
+                    <Image
                       src={item.image_url}
                       alt=""
+                      width={48}
+                      height={48}
                       className="h-12 w-12 shrink-0 rounded-lg object-cover"
                     />
                   ) : (
@@ -519,9 +526,11 @@ export function MenuManager({
             <p className="mb-1.5 text-xs font-semibold text-coffee-700">Ảnh món</p>
             <div className="flex items-center gap-3">
               {form.image_url ? (
-                <img
+                <Image
                   src={form.image_url}
                   alt=""
+                  width={64}
+                  height={64}
                   className="h-16 w-16 rounded-xl object-cover"
                 />
               ) : (

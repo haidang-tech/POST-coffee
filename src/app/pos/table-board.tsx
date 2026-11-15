@@ -53,6 +53,12 @@ export function TableBoard({
     errorTimer.current = setTimeout(() => setError(null), 4500);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (errorTimer.current) clearTimeout(errorTimer.current);
+    };
+  }, []);
+
   // Realtime: khi bàn/đơn thay đổi (kể cả từ thiết bị khác) thì refresh dữ liệu server.
   useEffect(() => {
     const supabase = createClient();

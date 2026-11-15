@@ -37,6 +37,7 @@ drop function if exists public.pos_set_table_status(uuid, text) cascade;
 drop function if exists public.pos_set_item_note(uuid, text) cascade;
 drop function if exists public.admin_sync_table_label(uuid) cascade;
 drop function if exists public.admin_set_member(uuid, text, boolean) cascade;
+drop function if exists public.admin_top_items(int, int) cascade;
 
 -- ============================================================
 -- 1. Bảng
@@ -132,6 +133,13 @@ create index idx_orders_status_table on public.orders(status, table_id);
 create index idx_orders_paid_at on public.orders(paid_at desc);
 create index idx_order_items_order on public.order_items(order_id);
 create index idx_audit_created on public.audit_log(created_at desc);
+
+-- Index phục vụ truy vấn nóng
+create index idx_orders_status_created on public.orders(status, created_at desc);
+create index idx_orders_created_at on public.orders(created_at desc);
+create index idx_orders_paid_only on public.orders(paid_at) where status = 'paid';
+create index idx_orders_open_table on public.orders(table_id) where status = 'open';
+create index idx_menu_items_active_sort on public.menu_items(is_active, sort_order);
 
 -- ============================================================
 -- 2. Helper functions
@@ -257,9 +265,20 @@ begin
   if not found then raise exception 'ITEM_NOT_FOUND'; end if;
   if not v_item.is_active then raise exception 'ITEM_UNAVAILABLE'; end if;
 
-  insert into public.order_items(order_id, menu_item_id, name_snapshot, unit_price, qty, note)
-  values (p_order_id, p_menu_item_id, v_item.name, v_item.price, p_qty, coalesce(p_note, ''))
+  -- Cùng món + cùng ghi chú => cộng dồn số lượng
+  update public.order_items
+  set qty = qty + p_qty
+  where order_id = p_order_id
+    and menu_item_id = p_menu_item_id
+    and note = coalesce(p_note, '')
+    and qty + p_qty <= 99
   returning * into v_row;
+
+  if not found then
+    insert into public.order_items(order_id, menu_item_id, name_snapshot, unit_price, qty, note)
+    values (p_order_id, p_menu_item_id, v_item.name, v_item.price, p_qty, coalesce(p_note, ''))
+    returning * into v_row;
+  end if;
 
   perform public.recalc_order(p_order_id);
   return v_row;
@@ -606,18 +625,30 @@ from public.orders
 where status = 'paid'
 group by 1;
 
-create view public.v_top_items with (security_invoker = true) as
-select
-  oi.menu_item_id,
-  oi.name_snapshot as name,
-  sum(oi.qty)::int as qty_sold,
-  sum(oi.qty * oi.unit_price)::bigint as revenue
-from public.order_items oi
-join public.orders o on o.id = oi.order_id
-where o.status = 'paid'
-group by 1, 2;
+-- Top món trong N ngày — security definer + kiểm tra admin, dùng index paid_at
+create or replace function public.admin_top_items(p_days int default 30, p_limit int default 5)
+returns table (name text, qty_sold int, revenue bigint)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'FORBIDDEN'; end if;
 
-grant select on public.v_daily_revenue, public.v_top_items to authenticated;
+  return query
+    select oi.name_snapshot,
+           sum(oi.qty)::int,
+           sum(oi.qty * oi.unit_price)::bigint
+    from public.order_items oi
+    join public.orders o on o.id = oi.order_id
+    where o.status = 'paid'
+      and o.paid_at >= now() - make_interval(days => greatest(p_days, 1))
+    group by oi.name_snapshot
+    order by 2 desc
+    limit greatest(p_limit, 1);
+end $$;
+
+grant select on public.v_daily_revenue to authenticated;
+
+revoke execute on function public.admin_top_items(int, int) from public, anon;
+grant execute on function public.admin_top_items(int, int) to authenticated;
 
 -- ============================================================
 -- 9. Realtime

@@ -1,10 +1,9 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   ArrowLeft,
   ArrowRightLeft,
@@ -84,6 +83,12 @@ export function OrderScreen({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [noteItem, setNoteItem] = useState<OrderItem | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (errorTimer.current) clearTimeout(errorTimer.current);
+    };
+  }, []);
 
   const subtotal = items.reduce((sum, item) => sum + item.unit_price * item.qty, 0);
   const discount = Math.min(
@@ -322,9 +327,11 @@ export function OrderScreen({
                           className="group flex w-full items-center gap-3 rounded-xl border border-cream-200 bg-white p-2.5 text-left transition-all hover:border-mocha-300 hover:shadow-sm disabled:opacity-60"
                         >
                           {item.image_url ? (
-                            <img
+                            <Image
                               src={item.image_url}
                               alt=""
+                              width={48}
+                              height={48}
                               className="h-12 w-12 shrink-0 rounded-lg object-cover"
                             />
                           ) : (

@@ -23,13 +23,15 @@ export default async function AdminDashboard() {
   await requireAdmin();
   const supabase = await createClient();
 
+  const today = vnDayKey();
+  const days = lastNDayKeys(7);
+
   const [revenueRes, topRes, recentRes, openRes] = await Promise.all([
-    supabase.from("v_daily_revenue").select("day, revenue, order_count"),
     supabase
-      .from("v_top_items")
-      .select("name, qty_sold, revenue")
-      .order("qty_sold", { ascending: false })
-      .limit(5),
+      .from("v_daily_revenue")
+      .select("day, revenue, order_count")
+      .gte("day", days[0]),
+    supabase.rpc("admin_top_items", { p_days: 30, p_limit: 5 }),
     supabase
       .from("orders")
       .select("id, code, table_label, total, status, created_at")
@@ -40,9 +42,6 @@ export default async function AdminDashboard() {
       .select("id", { count: "exact", head: true })
       .eq("status", "open"),
   ]);
-
-  const today = vnDayKey();
-  const days = lastNDayKeys(7);
 
   const revenueByDay = new Map(
     (revenueRes.data ?? []).map((row) => [
@@ -63,8 +62,12 @@ export default async function AdminDashboard() {
   const maxRevenue = Math.max(...series.map((point) => point.revenue), 1);
   const weekRevenue = series.reduce((sum, point) => sum + point.revenue, 0);
 
-  const topItems = (topRes.data ?? []).map((row) => ({
-    name: row.name as string,
+  const topItems = ((topRes.data ?? []) as {
+    name: string;
+    qty_sold: number;
+    revenue: number;
+  }[]).map((row) => ({
+    name: row.name,
     qty: Number(row.qty_sold),
     revenue: Number(row.revenue),
   }));

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   CircleAlert,
   KeyRound,
@@ -35,6 +35,12 @@ export function StaffManager({
 
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ email: "", full_name: "", password: "" });
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
 
   function flash(message: string, isError = false) {
     if (timer.current) clearTimeout(timer.current);

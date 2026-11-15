@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
@@ -8,8 +9,11 @@ export type SessionProfile = {
   profile: Profile;
 };
 
-/** Trả về user + profile đang active, hoặc null nếu chưa đăng nhập / bị khoá. */
-export async function getSessionProfile(): Promise<SessionProfile | null> {
+/**
+ * Trả về user + profile đang active, hoặc null nếu chưa đăng nhập / bị khoá.
+ * Bọc `cache()` để layout + page trong cùng request chỉ gọi Supabase 1 lần.
+ */
+export const getSessionProfile = cache(async (): Promise<SessionProfile | null> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,7 +30,7 @@ export async function getSessionProfile(): Promise<SessionProfile | null> {
   if (!profile || !profile.is_active) return null;
 
   return { userId: user.id, email: user.email ?? null, profile };
-}
+});
 
 /** Dùng trong layout/server component của khu vực cần đăng nhập. */
 export async function requireStaff(): Promise<SessionProfile> {

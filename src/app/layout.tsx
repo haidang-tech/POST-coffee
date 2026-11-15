@@ -4,14 +4,14 @@ import "./globals.css";
 
 const sans = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   variable: "--font-be-vietnam",
   display: "swap",
 });
 
 const display = Playfair_Display({
   subsets: ["latin", "vietnamese"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "600"],
   variable: "--font-playfair",
   display: "swap",
 });
