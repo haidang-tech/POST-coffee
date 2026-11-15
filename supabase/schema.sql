@@ -34,6 +34,8 @@ drop function if exists public.pos_merge_orders(uuid, uuid) cascade;
 drop function if exists public.pos_pay_order(uuid, int) cascade;
 drop function if exists public.pos_cancel_order(uuid) cascade;
 drop function if exists public.pos_set_table_status(uuid, text) cascade;
+drop function if exists public.pos_set_item_note(uuid, text) cascade;
+drop function if exists public.admin_sync_table_label(uuid) cascade;
 drop function if exists public.admin_set_member(uuid, text, boolean) cascade;
 
 -- ============================================================
@@ -449,6 +451,20 @@ end $$;
 -- ============================================================
 -- 4. RPC — Admin
 -- ============================================================
+create or replace function public.admin_sync_table_label(p_table_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_name text;
+begin
+  if not public.is_admin() then raise exception 'FORBIDDEN'; end if;
+
+  select name into v_name from public.tables where id = p_table_id;
+  if v_name is null then return; end if;
+
+  update public.orders
+  set table_label = v_name
+  where table_id = p_table_id and status = 'open';
+end $$;
+
 create or replace function public.admin_set_member(
   p_user_id uuid, p_role text, p_is_active boolean
 ) returns void language plpgsql security definer set search_path = public as $$
@@ -576,6 +592,7 @@ grant execute on function public.pos_cancel_order(uuid) to authenticated;
 grant execute on function public.pos_set_table_status(uuid, text) to authenticated;
 grant execute on function public.pos_set_item_note(uuid, text) to authenticated;
 grant execute on function public.admin_set_member(uuid, text, boolean) to authenticated;
+grant execute on function public.admin_sync_table_label(uuid) to authenticated;
 
 -- ============================================================
 -- 8. Views báo cáo (RLS của bảng gốc vẫn áp dụng)

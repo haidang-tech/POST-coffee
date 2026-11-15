@@ -90,12 +90,11 @@ export async function saveTableAction(input: unknown): Promise<AdminResult> {
         .eq("id", parsed.data.id);
       if (error) return fail(error.message);
 
-      // Giữ nhãn bàn trên các đơn đang mở đồng bộ với tên mới.
-      await supabase
-        .from("orders")
-        .update({ table_label: parsed.data.name })
-        .eq("table_id", parsed.data.id)
-        .eq("status", "open");
+      // Giữ nhãn bàn trên các đơn đang mở đồng bộ với tên mới (RLS chặn ghi
+      // trực tiếp vào orders nên phải qua RPC).
+      await supabase.rpc("admin_sync_table_label", {
+        p_table_id: parsed.data.id,
+      });
     } else {
       const { error } = await supabase.from("tables").insert(payload);
       if (error) return fail(error.message);
