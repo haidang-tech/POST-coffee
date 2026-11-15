@@ -701,23 +701,30 @@ insert into public.categories (name, sort_order) values
   ('Cà phê', 1),
   ('Trà & trái cây', 2),
   ('Đá xay', 3),
-  ('Bánh ngọt', 4);
+  ('Bánh ngọt', 4),
+  ('Nước ép', 5);
 
-insert into public.menu_items (category_id, name, description, price, sort_order)
-select c.id, v.name, v.description, v.price, v.sort_order
+insert into public.menu_items (category_id, name, description, price, sort_order, image_url)
+select c.id, v.name, v.description, v.price, v.sort_order, v.image_url
 from (values
-  ('Cà phê', 'Cà phê đen', 'Cà phê phin truyền thống, đậm vị', 25000, 1),
-  ('Cà phê', 'Cà phê sữa', 'Phin đen kết hợp sữa đặc', 29000, 2),
-  ('Cà phê', 'Bạc xỉu', 'Nhiều sữa, ít cà phê', 32000, 3),
-  ('Cà phê', 'Cold Brew', 'Ủ lạnh 18 giờ, thanh mát', 45000, 4),
-  ('Trà & trái cây', 'Trà đào cam sả', 'Đào ngâm, cam tươi, sả', 39000, 1),
-  ('Trà & trái cây', 'Trà xoài nhiệt đới', 'Xoài chín, trà lài', 42000, 2),
-  ('Trà & trái cây', 'Trà sen vàng', 'Sen, củ sâm, táo đỏ', 45000, 3),
-  ('Đá xay', 'Matcha đá xay', 'Matcha Nhật, sữa tươi', 49000, 1),
-  ('Đá xay', 'Cookies đá xay', 'Bánh quy giòn, kem tươi', 52000, 2),
-  ('Bánh ngọt', 'Croissant bơ', 'Nướng mỗi sáng', 35000, 1),
-  ('Bánh ngọt', 'Tiramisu', 'Cà phê, mascarpone', 45000, 2)
-) as v(cat, name, description, price, sort_order)
+  ('Cà phê', 'Cà phê đen', 'Cà phê phin truyền thống, đậm vị', 25000, 1, 'https://culgwwmnynljyzqwwxgg.supabase.co/storage/v1/object/public/menu-images/menu/ca-phe-den.png'),
+  ('Cà phê', 'Cà phê sữa', 'Phin đen kết hợp sữa đặc', 29000, 2, 'https://culgwwmnynljyzqwwxgg.supabase.co/storage/v1/object/public/menu-images/menu/ca-phe-sua.png'),
+  ('Cà phê', 'Bạc xỉu', 'Nhiều sữa, ít cà phê', 32000, 3, null),
+  ('Cà phê', 'Cold Brew', 'Ủ lạnh 18 giờ, thanh mát', 45000, 4, null),
+  ('Cà phê', 'Cà phê Espresso', 'Espresso đậm đặc, lớp crema mịn', 30000, 5, 'https://culgwwmnynljyzqwwxgg.supabase.co/storage/v1/object/public/menu-images/menu/espresso.png'),
+  ('Cà phê', 'Cà phê muối', 'Cà phê đậm, kem muối mặn ngọt', 35000, 6, 'https://culgwwmnynljyzqwwxgg.supabase.co/storage/v1/object/public/menu-images/menu/ca-phe-muoi.png'),
+  ('Trà & trái cây', 'Trà đào cam sả', 'Đào ngâm, cam tươi, sả', 39000, 1, null),
+  ('Trà & trái cây', 'Trà xoài nhiệt đới', 'Xoài chín, trà lài', 42000, 2, null),
+  ('Trà & trái cây', 'Trà sen vàng', 'Sen, củ sâm, táo đỏ', 45000, 3, null),
+  ('Đá xay', 'Matcha đá xay', 'Matcha Nhật, sữa tươi', 49000, 1, null),
+  ('Đá xay', 'Cookies đá xay', 'Bánh quy giòn, kem tươi', 52000, 2, null),
+  ('Bánh ngọt', 'Croissant bơ', 'Nướng mỗi sáng', 35000, 1, null),
+  ('Bánh ngọt', 'Tiramisu', 'Cà phê, mascarpone', 45000, 2, null),
+  ('Nước ép', 'Nước ép táo', 'Táo ép tươi, thanh ngọt', 25000, 1, 'https://culgwwmnynljyzqwwxgg.supabase.co/storage/v1/object/public/menu-images/menu/nuoc-ep-tao.webp'),
+  ('Nước ép', 'Nước ép thơm', 'Thơm ép tươi, chua ngọt', 25000, 2, 'https://culgwwmnynljyzqwwxgg.supabase.co/storage/v1/object/public/menu-images/menu/nuoc-ep-thom.webp'),
+  ('Nước ép', 'Nước ép cà rốt', 'Cà rốt ép tươi', 25000, 3, 'https://culgwwmnynljyzqwwxgg.supabase.co/storage/v1/object/public/menu-images/menu/nuoc-ep-ca-rot.webp'),
+  ('Nước ép', 'Nước ép ổi', 'Ổi ép tươi, thơm dịu', 25000, 4, 'https://culgwwmnynljyzqwwxgg.supabase.co/storage/v1/object/public/menu-images/menu/nuoc-ep-oi.webp')
+) as v(cat, name, description, price, sort_order, image_url)
 join public.categories c on c.name = v.cat;
 
 insert into public.areas (name, sort_order) values
