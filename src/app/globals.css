@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cream-50: #f6f7f4;
-  --color-cream-100: #edf0e9;
-  --color-cream-200: #e0e5db;
-  --color-cream-300: #e2d1bc;
+  --color-cream-50: #f3f8f0;
+  --color-cream-100: #eaf3e6;
+  --color-cream-200: #dce9d7;
+  --color-cream-300: #c7ddbd;
 
-  --color-coffee-900: #241a14;
-  --color-coffee-800: #33251c;
-  --color-coffee-700: #4a3527;
-  --color-coffee-600: #6f4e37;
-  --color-coffee-500: #8b6446;
-  --color-mocha-400: #76796d;
-  --color-mocha-300: #c9ae92;
+  --color-coffee-900: #17241a;
+  --color-coffee-800: #203324;
+  --color-coffee-700: #304d34;
+  --color-coffee-600: #4e7548;
+  --color-coffee-500: #67985b;
+  --color-mocha-400: #748774;
+  --color-mocha-300: #abc2a2;
 
-  --color-accent-500: #b96938;
-  --color-accent-600: #9b4f25;
+  --color-accent-500: #82bd6d;
+  --color-accent-600: #548f46;
 
-  --color-success-500: #3f8f5b;
+  --color-success-500: #438d54;
   --color-danger-500: #c2453d;
   --color-warning-500: #d9a036;
 
@@ -28,12 +28,14 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    scroll-padding-top: 5rem;
   }
   body {
     @apply bg-cream-50 text-coffee-900 antialiased;
+    min-width: 320px;
   }
   ::selection {
-    background: rgba(232, 128, 60, 0.25);
+    background: rgba(130, 189, 109, 0.3);
   }
   h1,
   h2,

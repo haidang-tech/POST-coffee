@@ -211,17 +211,17 @@ export function TableBoard({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cream-200 bg-white p-3">
+      <div className="flex flex-col items-stretch justify-between gap-2 rounded-2xl border border-cream-200 bg-white p-2.5 sm:flex-row sm:items-center sm:gap-3 sm:p-3">
         <div className="flex flex-wrap gap-1" aria-label="Lọc trạng thái bàn">
           {([['all', 'Tất cả'], ['empty', 'Trống'], ['busy', 'Có khách'], ['reserved', 'Đặt trước']] as const).map(([value, label]) => (
             <button key={value} type="button" aria-pressed={statusFilter === value}
               onClick={() => setStatusFilter(value)}
-              className={cn("rounded-xl px-3 py-2 text-xs font-semibold transition-colors", statusFilter === value ? "bg-coffee-800 text-white" : "text-mocha-400 hover:bg-cream-100")}>
+              className={cn("min-h-10 rounded-xl px-3 py-2 text-xs font-semibold transition-colors", statusFilter === value ? "bg-coffee-800 text-white" : "text-mocha-400 hover:bg-cream-100")}>
               {label}
             </button>
           ))}
         </div>
-        <select aria-label="Lọc khu vực" value={areaFilter} onChange={(event) => setAreaFilter(event.target.value)} className="h-10 rounded-xl border border-cream-200 bg-cream-50 px-3 text-sm text-coffee-700">
+        <select aria-label="Lọc khu vực" value={areaFilter} onChange={(event) => setAreaFilter(event.target.value)} className="h-11 w-full rounded-xl border border-cream-200 bg-cream-50 px-3 text-sm text-coffee-700 sm:w-auto">
           <option value="all">Tất cả khu vực</option>
           {areas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
         </select>
@@ -251,7 +251,7 @@ export function TableBoard({
                     <div
                       key={table.id}
                       className={cn(
-                        "group relative flex min-h-44 flex-col overflow-hidden rounded-2xl border transition-colors",
+                        "group relative flex min-h-40 flex-col overflow-hidden rounded-2xl border transition-colors sm:min-h-44",
                         status === "busy" &&
                           "border-coffee-800 bg-coffee-800 text-cream-50 shadow-md",
                         status === "empty" &&
@@ -264,7 +264,7 @@ export function TableBoard({
                         type="button"
                         onClick={() => openOrView(table)}
                         disabled={pending}
-                        className="flex flex-1 flex-col items-start gap-3 p-4 text-left disabled:opacity-70"
+                        className="flex flex-1 flex-col items-start gap-3 p-3.5 text-left disabled:opacity-70 sm:p-4"
                       >
                         <div className="flex w-full items-start justify-between gap-2">
                           <span
@@ -335,7 +335,7 @@ export function TableBoard({
                             type="button"
                             onClick={() => changeStatus(table, "reserved")}
                             disabled={pending}
-                            className="rounded-md px-2 py-1 text-[11px] font-medium text-mocha-400 transition-colors hover:bg-cream-100 hover:text-coffee-700"
+                            className="min-h-10 rounded-lg px-2.5 py-2 text-[11px] font-medium text-mocha-400 transition-colors hover:bg-cream-100 hover:text-coffee-700"
                           >
                             Đặt trước
                           </button>

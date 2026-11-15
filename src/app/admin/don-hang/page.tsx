@@ -229,7 +229,7 @@ function MiniStat({
       <p
         className={cn(
           "text-[11px] font-semibold uppercase tracking-[0.14em]",
-          accent ? "text-accent-500" : "text-mocha-400",
+          accent ? "text-accent-600" : "text-mocha-400",
         )}
       >
         {label}

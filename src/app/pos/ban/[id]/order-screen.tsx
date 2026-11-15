@@ -217,7 +217,7 @@ export function OrderScreen({
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-3 pb-28 pt-4 sm:px-6 sm:pb-8 sm:pt-6">
+    <main className="mx-auto max-w-7xl px-3 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-8 sm:pt-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -232,38 +232,49 @@ export function OrderScreen({
             <p className="text-[11px] uppercase tracking-[0.18em] text-mocha-400">
               {order.code} · mở lúc {formatTimeVN(order.created_at)}
             </p>
-            <h1 className="flex items-center gap-2 text-2xl font-semibold leading-tight text-coffee-900">
+            <h1 className="flex items-center gap-2 text-xl font-semibold leading-tight text-coffee-900 sm:text-2xl">
               Bàn {order.table_label}
               <Badge tone="accent">{itemCount} món</Badge>
             </h1>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => setMoveOpen(true)}
             disabled={pending}
+            aria-label="Chuyển bàn"
+            title="Chuyển bàn"
+            className="h-10 w-10 gap-2 rounded-xl sm:h-8 sm:w-auto sm:px-3"
           >
-            <ArrowRightLeft className="h-3.5 w-3.5" /> Chuyển bàn
+            <ArrowRightLeft className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+            <span className="hidden sm:inline">Chuyển bàn</span>
           </Button>
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => setMergeOpen(true)}
             disabled={pending || openOrders.length === 0}
+            aria-label="Gộp đơn"
+            title="Gộp đơn"
+            className="h-10 w-10 gap-2 rounded-xl sm:h-8 sm:w-auto sm:px-3"
           >
-            <Combine className="h-3.5 w-3.5" /> Gộp đơn
+            <Combine className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+            <span className="hidden sm:inline">Gộp đơn</span>
           </Button>
           <Button
             variant="ghost"
-            size="sm"
-            className="text-danger-500 hover:bg-danger-500/10"
+            size="icon"
+            className="h-10 w-10 gap-2 rounded-xl text-danger-500 hover:bg-danger-500/10 sm:h-8 sm:w-auto sm:px-3"
             onClick={() => setCancelOpen(true)}
             disabled={pending}
+            aria-label="Huỷ đơn"
+            title="Huỷ đơn"
           >
-            <Trash2 className="h-3.5 w-3.5" /> Huỷ
+            <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+            <span className="hidden sm:inline">Huỷ</span>
           </Button>
         </div>
       </div>
@@ -281,7 +292,7 @@ export function OrderScreen({
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         {/* Menu */}
         <section className="space-y-3">
-          <div className="sticky top-[4.5rem] z-10 rounded-2xl border border-cream-200 bg-white p-3 shadow-sm">
+          <div className="sticky top-16 z-10 rounded-2xl border border-cream-200 bg-white p-3 shadow-sm">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-mocha-400" />
               <Input
@@ -465,10 +476,10 @@ export function OrderScreen({
                           type="button"
                           onClick={() => changeQty(item, item.qty - 1)}
                           disabled={pending}
-                          className="flex h-7 w-7 items-center justify-center rounded-md border border-cream-200 text-coffee-700 transition-colors hover:bg-cream-100 disabled:opacity-50"
+                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-cream-200 text-coffee-700 transition-colors hover:bg-cream-100 disabled:opacity-50"
                           aria-label="Giảm số lượng"
                         >
-                          <Minus className="h-3 w-3" />
+                          <Minus className="h-3.5 w-3.5" />
                         </button>
                         <span className="w-7 text-center text-sm font-semibold tabular-nums">
                           {item.qty}
@@ -477,10 +488,10 @@ export function OrderScreen({
                           type="button"
                           onClick={() => changeQty(item, item.qty + 1)}
                           disabled={pending}
-                          className="flex h-7 w-7 items-center justify-center rounded-md border border-cream-200 text-coffee-700 transition-colors hover:bg-cream-100 disabled:opacity-50"
+                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-cream-200 text-coffee-700 transition-colors hover:bg-cream-100 disabled:opacity-50"
                           aria-label="Tăng số lượng"
                         >
-                          <Plus className="h-3 w-3" />
+                          <Plus className="h-3.5 w-3.5" />
                         </button>
                       </div>
 
@@ -539,7 +550,7 @@ export function OrderScreen({
 
       {/* Mobile bill bar */}
       {!showBill ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-cream-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-cream-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden">
           <button
             type="button"
             onClick={() => setShowBill(true)}
