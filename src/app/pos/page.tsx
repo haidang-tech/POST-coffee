@@ -1,39 +1,13 @@
-import { requireStaff } from "@/lib/auth";
+﻿import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { Area, CoffeeTable } from "@/lib/types";
-import { TableBoard } from "./table-board";
-
+import type { MenuItem } from "@/lib/types";
+import { loadBoardData } from "./board-data";
+import { EmptyWorkspace } from "./empty-workspace";
 export const dynamic = "force-dynamic";
-
-export default async function PosPage() {
+export default async function PosPage({ searchParams }: { searchParams: Promise<{ table?: string; view?: string }> }) {
   await requireStaff();
-  const supabase = await createClient();
-
-  const [areasRes, tablesRes, ordersRes] = await Promise.all([
-    supabase.from("areas").select("id, name, sort_order").order("sort_order"),
-    supabase
-      .from("tables")
-      .select("id, area_id, name, seats, status, is_active")
-      .eq("is_active", true)
-      .order("name"),
-    supabase
-      .from("orders")
-      .select("id, table_id")
-      .eq("status", "open"),
-  ]);
-
-  const openOrders = (ordersRes.data ?? []).map((row) => ({
-    id: row.id,
-    table_id: row.table_id,
-  }));
-
-  return (
-    <main className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-8">
-      <TableBoard
-        areas={(areasRes.data ?? []) as Area[]}
-        tables={(tablesRes.data ?? []) as CoffeeTable[]}
-        openOrders={openOrders}
-      />
-    </main>
-  );
+  const db = await createClient();
+  const [data, menu, params] = await Promise.all([loadBoardData(), db.from("menu_items").select("*").eq("is_active", true).order("sort_order").order("name"), searchParams]);
+  if (menu.error) throw new Error("Không tải được thực đơn. Vui lòng thử lại.");
+  return <EmptyWorkspace key={`${params.table ?? "none"}-${params.view ?? "tables"}`} data={data} menuItems={(menu.data ?? []) as MenuItem[]} initialTableId={params.table} initialView={params.view} />;
 }

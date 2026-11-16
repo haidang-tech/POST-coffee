@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { PosBrowser } from "../../pos-browser";
+import type { BoardData } from "../../table-board";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
 import {
   ArrowLeft,
@@ -54,6 +56,7 @@ const QUICK_DISCOUNTS = [0, 5_000, 10_000, 20_000, 50_000];
 
 export function OrderScreen({
   order,
+  boardData,
   items: serverItems,
   categories,
   menuItems,
@@ -61,6 +64,7 @@ export function OrderScreen({
   openOrders,
 }: {
   order: Order;
+  boardData: BoardData;
   items: OrderItem[];
   categories: Category[];
   menuItems: MenuItem[];
@@ -68,6 +72,9 @@ export function OrderScreen({
   openOrders: OpenOrderOption[];
 }) {
   const router = useRouter();
+  const params = useSearchParams();
+  const [view, setView] = useState(params.get("view") === "menu" ? "menu" : "tables");
+  const [billQuery, setBillQuery] = useState("");
   const [items, preview] = useOptimistic(serverItems, previewOrder);
   const [pending, startTransition] = useTransition();
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -217,12 +224,14 @@ export function OrderScreen({
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-3 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-8 sm:pt-6">
+    <main className="pos-workspace">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="pos-order-heading flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link
             href="/pos"
+            onClick={(event) => { if (pending) event.preventDefault(); }}
+            aria-disabled={pending}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-cream-200 bg-white text-coffee-700 transition-colors hover:bg-cream-100"
             aria-label="Về sơ đồ bàn"
           >
@@ -289,10 +298,14 @@ export function OrderScreen({
         </div>
       ) : null}
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="pos-columns">
         {/* Menu */}
-        <section className="space-y-3">
-          <div className="sticky top-16 z-10 rounded-2xl border border-cream-200 bg-white p-3 shadow-sm">
+        <PosBrowser data={boardData} selectedId={order.table_id} disabled={pending} view={view} onView={setView} onSelect={(table, openMenu) => {
+          if (table.id === order.table_id) { if (openMenu) setView("menu"); return; }
+          const target = boardData.openOrders.find((entry) => entry.table_id === table.id);
+          startTransition(() => router.push(target ? `/pos/ban/${target.id}${openMenu ? "?view=menu" : ""}` : `/pos?table=${table.id}${openMenu ? "&view=menu" : ""}`));
+        }} menu={<section className="space-y-3">
+          <div className="sticky top-0 z-10 rounded-xl border border-cream-200 bg-white p-3 shadow-sm">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-mocha-400" />
               <Input
@@ -413,17 +426,21 @@ export function OrderScreen({
               ) : null}
             </div>
           )}
-        </section>
+        </section>} />
 
         {/* Bill */}
         <aside
           className={cn(
-            "flex flex-col rounded-2xl border border-cream-200 bg-white lg:sticky lg:top-20 lg:h-[calc(100dvh-6.5rem)]",
+            "pos-bill",
             showBill
-              ? "fixed inset-0 z-40 rounded-none border-0 lg:static lg:z-auto lg:rounded-2xl lg:border"
-              : "hidden lg:flex",
+              ? "mobile-open" : "mobile-closed",
           )}
         >
+          <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-cream-200 bg-cream-50 p-2" aria-label="Đơn đang mở">
+            <span className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Bàn {order.table_label}</span>
+            {boardData.openOrders.filter((entry) => entry.id !== order.id).map((entry) => <button key={entry.id} disabled={pending} className="min-h-10 shrink-0 rounded-md px-3 text-xs text-coffee-700 hover:bg-white" onClick={() => startTransition(() => router.push(`/pos/ban/${entry.id}`))}>Bàn {entry.table_label}</button>)}
+            <button disabled={pending} onClick={() => router.push("/pos")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md hover:bg-white" aria-label="Chọn bàn cho đơn mới"><Plus className="h-4 w-4" /></button>
+          </div>
           <div className="flex items-center justify-between gap-2 border-b border-cream-200 px-4 py-3">
             <div>
               <h2 className="flex items-center gap-2 text-sm font-semibold text-coffee-900">Đơn hiện tại {pending && <span role="status" className="text-xs font-normal text-accent-600">Đang lưu…</span>}</h2>
@@ -431,17 +448,23 @@ export function OrderScreen({
                 Bàn {order.table_label} · {order.code}
               </p>
             </div>
+            <button type="button" disabled={pending} onClick={() => router.push("/pos")} className="hidden h-11 w-11 items-center justify-center rounded-lg text-mocha-400 hover:bg-cream-100 md:flex" aria-label="Đóng bảng đơn, giữ đơn đang mở"><X className="h-4 w-4" /></button>
             <button
               type="button"
               onClick={() => setShowBill(false)}
-              className="rounded-lg p-1.5 text-mocha-400 hover:bg-cream-100 lg:hidden"
+              className="rounded-lg p-1.5 text-mocha-400 hover:bg-cream-100 md:hidden"
               aria-label="Đóng"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4">
+          <div className="flex shrink-0 items-center gap-2 border-b border-cream-200 p-3">
+            <Input aria-label="T?m m?n trong ??n" placeholder="T?m m?n trong ??n?" value={billQuery} onChange={(event) => setBillQuery(event.target.value)} className="min-w-0 flex-1" />
+            <Button variant="outline" onClick={() => { setView("menu"); setShowBill(false); }}><Plus className="h-4 w-4" />Th?m m?n</Button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4">
+            {billQuery && !items.some((item) => searchText(item.name_snapshot).includes(searchText(billQuery))) && <p className="py-6 text-center text-sm text-mocha-400">Không tìm thấy món trong đơn.</p>}
             {items.length === 0 ? (
               <EmptyState
                 title="Chưa có món nào"
@@ -449,12 +472,12 @@ export function OrderScreen({
               />
             ) : (
               <ul className="divide-y divide-cream-200">
-                {items.map((item) => (
+                {items.filter((item) => searchText(item.name_snapshot).includes(searchText(billQuery))).map((item, index) => (
                   <li key={item.id} className="py-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold leading-tight text-coffee-900">
-                          {item.name_snapshot}
+                          <span className="mr-2 text-xs font-normal text-mocha-400">{index + 1}.</span>{item.name_snapshot}
                         </p>
                         <p className="mt-0.5 text-[11px] text-mocha-400">
                           {vnd(item.unit_price)} / món
@@ -476,7 +499,7 @@ export function OrderScreen({
                           type="button"
                           onClick={() => changeQty(item, item.qty - 1)}
                           disabled={pending}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-cream-200 text-coffee-700 transition-colors hover:bg-cream-100 disabled:opacity-50"
+                          className="flex h-11 w-11 items-center justify-center rounded-lg border border-cream-200 text-coffee-700 transition-colors hover:bg-cream-100 disabled:opacity-50"
                           aria-label="Giảm số lượng"
                         >
                           <Minus className="h-3.5 w-3.5" />
@@ -488,7 +511,7 @@ export function OrderScreen({
                           type="button"
                           onClick={() => changeQty(item, item.qty + 1)}
                           disabled={pending}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-cream-200 text-coffee-700 transition-colors hover:bg-cream-100 disabled:opacity-50"
+                          className="flex h-11 w-11 items-center justify-center rounded-lg border border-cream-200 text-coffee-700 transition-colors hover:bg-cream-100 disabled:opacity-50"
                           aria-label="Tăng số lượng"
                         >
                           <Plus className="h-3.5 w-3.5" />
@@ -501,7 +524,7 @@ export function OrderScreen({
                           setNoteDraft(item.note);
                           setNoteItem(item);
                         }}
-                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-mocha-400 transition-colors hover:bg-cream-100 hover:text-coffee-700"
+                        className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-mocha-400 transition-colors hover:bg-cream-100 hover:text-coffee-700"
                       >
                         <NotebookPen className="h-3 w-3" />
                         Ghi chú
@@ -513,7 +536,8 @@ export function OrderScreen({
             )}
           </div>
 
-          <div className=" border-t border-cream-200 px-4 py-3">
+          {order.note && <p className="shrink-0 border-t border-cream-200 px-4 py-2 text-xs text-mocha-400">Ghi ch?: {order.note}</p>}
+          <div className="pos-checkout shrink-0 border-t border-cream-200 px-4 py-3">
             <div className="space-y-1 text-sm">
               <div className="flex justify-between text-mocha-400">
                 <span>Tạm tính</span>
@@ -535,7 +559,7 @@ export function OrderScreen({
 
             <Button
               size="lg"
-              className="mt-3 w-full"
+              className="pos-pay mt-3 w-full"
               onClick={() => {
                 setDiscountInput("0");
                 setPayOpen(true);
@@ -550,7 +574,7 @@ export function OrderScreen({
 
       {/* Mobile bill bar */}
       {!showBill ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-cream-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-cream-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur md:hidden">
           <button
             type="button"
             onClick={() => setShowBill(true)}

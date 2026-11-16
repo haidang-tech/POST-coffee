@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Category, MenuItem, Order, OrderItem } from "@/lib/types";
 import { formatDateTimeVN, vnd } from "@/lib/utils";
+import { loadBoardData } from "../../board-data";
 import { OrderScreen } from "./order-screen";
 
 export const dynamic = "force-dynamic";
@@ -151,6 +152,8 @@ export default async function OrderPage({
 
   return (
     <OrderScreen
+      key={order.id}
+      boardData={await loadBoardData()}
       order={order}
       items={items}
       categories={categories}

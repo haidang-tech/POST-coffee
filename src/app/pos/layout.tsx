@@ -1,3 +1,4 @@
+import "./pos.css";
 import Link from "next/link";
 import { Coffee, LayoutDashboard, LogOut } from "lucide-react";
 import { requireStaff } from "@/lib/auth";
@@ -12,15 +13,15 @@ export default async function PosLayout({
   const { profile } = await requireStaff();
 
   return (
-    <div className="min-h-dvh">
-      <header className="print-hidden sticky top-0 z-30 border-b border-cream-200 bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
+    <div className="pos-shell min-h-dvh">
+      <header className="pos-header print-hidden sticky top-0 z-30">
+        <div className="flex h-16 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
           <Link href="/pos" className="flex min-w-0 items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-coffee-800 text-cream-50">
               <Coffee className="h-4 w-4" />
             </span>
             <span className="min-w-0 leading-tight">
-              <span className="block font-display text-[15px] font-semibold tracking-wide text-coffee-900">
+              <span className="block text-[15px] font-semibold tracking-wide text-coffee-900">
                 POST Coffee
               </span>
               <span className="hidden text-[10px] uppercase tracking-[0.2em] text-mocha-400 sm:block">
