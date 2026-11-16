@@ -1,7 +1,8 @@
 "use client";
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ReceiptText, Plus, X, Search } from "lucide-react";
+import { BookOpen, ReceiptText, Plus, X, Search } from "lucide-react";
 import { PosBrowser } from "./pos-browser";
 import type { BoardData } from "./table-board";
 import type { MenuItem, CoffeeTable } from "@/lib/types";
@@ -35,7 +36,11 @@ export function EmptyWorkspace({ data, menuItems, initialTableId, initialView }:
     <PosBrowser data={data} selectedId={selectedId} disabled={pending} view={view} onView={setView} onSelect={select} menu={<div>
       <label className="mb-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3"><Search className="h-4 w-4 text-slate-400" /><input className="h-11 min-w-0 flex-1 text-sm" placeholder="Tìm món trong thực đơn" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
       <p className="mb-4 text-xs text-slate-500">Chọn bàn và mở đơn để bắt đầu thêm món.</p>
-      <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">{menuItems.filter((item) => searchText(item.name).includes(searchText(query))).map((item) => <div key={item.id} className="flex min-h-16 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm"><span>{item.name}</span><b className="shrink-0">{vnd(item.price)}</b></div>)}</div>
+      <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">{menuItems.filter((item) => searchText(item.name).includes(searchText(query))).map((item) => <div key={item.id} className="flex min-h-16 items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm">
+        {item.image_url ? <Image src={item.image_url} alt="" width={56} height={56} sizes="56px" className="h-14 w-14 shrink-0 rounded-md object-cover" /> : <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400"><BookOpen className="h-4 w-4" /></span>}
+        <span className="min-w-0 flex-1"><span className="block truncate font-medium">{item.name}</span>{item.description ? <span className="block truncate text-xs text-slate-500">{item.description}</span> : null}</span>
+        <b className="shrink-0">{vnd(item.price)}</b>
+      </div>)}</div>
     </div>} />
     <aside className="pos-empty-bill">
       <div className="flex min-h-14 items-center justify-between border-b border-slate-200 px-4"><h1 className="font-semibold">{table ? `Bàn ${table.name}` : "Đơn hiện tại"}</h1>{table && <button className="flex h-11 w-11 items-center justify-center" aria-label="Bỏ chọn bàn" disabled={pending} onClick={() => setSelectedId(undefined)}><X className="h-4 w-4" /></button>}</div>
