@@ -1,3 +1,4 @@
+import "../workspace-theme.css";
 import "./pos.css";
 import Link from "next/link";
 import { Coffee, LayoutDashboard, LogOut } from "lucide-react";

@@ -1,0 +1,2 @@
+/* Shared visual language for management and counter workspaces. */
+.pos-shell, .admin-shell { --color-cream-50:#f5f7fb; --color-cream-100:#eef2f7; --color-cream-200:#dfe5ed; --color-coffee-900:#182b46; --color-coffee-800:#203c60; --color-coffee-700:#245c9c; --color-coffee-600:#4274ab; --color-coffee-500:#538bca; --color-mocha-400:#718096; --color-accent-500:#3b82f6; --color-accent-600:#2563eb; background:#f3f6fa; color:#182b46; }

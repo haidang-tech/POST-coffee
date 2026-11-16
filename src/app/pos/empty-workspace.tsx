@@ -28,8 +28,7 @@ export function EmptyWorkspace({ data, menuItems, initialTableId, initialView }:
     if (!table || pending) return;
     startTransition(async () => {
       const result = await openTableAction(table.id);
-      if (!result.ok) { setError(result.error); return; }
-      router.push(`/pos/ban/${result.orderId}?view=menu`);
+      setError(result.error);
     });
   }
   return <main className="pos-workspace"><div className="pos-columns pos-empty-columns">

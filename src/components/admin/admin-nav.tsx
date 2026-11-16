@@ -45,10 +45,10 @@ export function AdminNav({ variant = "sidebar" }: { variant?: "sidebar" | "bar" 
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+              "flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
               variant === "bar" && "shrink-0 py-2",
               active
-                ? "bg-coffee-800 text-cream-50 shadow-sm"
+                ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200"
                 : "text-coffee-700 hover:bg-cream-100",
             )}
           >

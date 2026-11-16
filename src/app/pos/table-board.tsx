@@ -1,5 +1,5 @@
 ﻿"use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -15,6 +15,18 @@ export function TableBoard({ areas, tables, openOrders, selectedId, onSelect, di
   const [area, setArea] = useState("all");
   const [status, setStatus] = useState("all");
   const [openMenu, setOpenMenu] = useState(false);
+  const orderByTable = useMemo(() => new Map(openOrders.map((order) => [order.table_id, order])), [openOrders]);
+  const prefetchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(prefetchTimer.current), []);
+  function prepareTable(table: CoffeeTable) {
+    clearTimeout(prefetchTimer.current);
+    const order = orderByTable.get(table.id);
+    if (!order || disabled) return;
+    // Only warm the intended destination; do not fetch every table on mount.
+    prefetchTimer.current = setTimeout(() => {
+      router.prefetch(`/pos/ban/${order.id}${openMenu ? "?view=menu" : ""}`);
+    }, 120);
+  }
   useEffect(() => {
     try {
       setArea(sessionStorage.getItem("pos-area") || "all");
@@ -40,7 +52,7 @@ export function TableBoard({ areas, tables, openOrders, selectedId, onSelect, di
       .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, schedule).subscribe();
     return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", visible); void supabase.removeChannel(channel); };
   }, [router, disabled]);
-  const busy = (table: CoffeeTable) => table.status === "busy" || openOrders.some((order) => order.table_id === table.id);
+  const busy = (table: CoffeeTable) => table.status === "busy" || orderByTable.has(table.id);
   const areaTables = tables.filter((table) => area === "all" || table.area_id === area || (area === "none" && !table.area_id));
   const counts = { all: areaTables.length, busy: areaTables.filter(busy).length, empty: areaTables.filter((table) => !busy(table) && table.status === "empty").length };
   const visibleTables = areaTables.filter((table) => status === "all" || (status === "busy" ? busy(table) : !busy(table) && table.status === "empty"));
@@ -56,7 +68,7 @@ export function TableBoard({ areas, tables, openOrders, selectedId, onSelect, di
         const groupTables = visibleTables.filter((table) => group.id === "none" ? !table.area_id : table.area_id === group.id);
         if (!groupTables.length) return null;
         return <section key={group.id} className="mb-6"><h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{group.name}<span className="h-px flex-1 bg-slate-200" />{groupTables.length} bàn</h2>
-          <div className="pos-table-grid">{groupTables.map((table) => <button key={table.id} disabled={disabled} aria-pressed={selectedId === table.id} onClick={() => onSelect(table, openMenu)} className={cn("pos-table", busy(table) && "busy", selectedId === table.id && "selected")} aria-label={`Bàn ${table.name}, ${busy(table) ? "đang sử dụng" : table.status === "reserved" ? "đã đặt" : "còn trống"}`}>
+          <div className="pos-table-grid">{groupTables.map((table) => <button key={table.id} disabled={disabled} onPointerEnter={() => prepareTable(table)} onPointerLeave={() => clearTimeout(prefetchTimer.current)} onFocus={() => prepareTable(table)} onBlur={() => clearTimeout(prefetchTimer.current)} aria-pressed={selectedId === table.id} onClick={() => onSelect(table, openMenu)} className={cn("pos-table", busy(table) && "busy", selectedId === table.id && "selected")} aria-label={`Bàn ${table.name}, ${busy(table) ? "đang sử dụng" : table.status === "reserved" ? "đã đặt" : "còn trống"}`}>
             {selectedId === table.id && <Check className="absolute right-2 top-2 h-4 w-4" />}
             <svg viewBox="0 0 80 54" fill="none" className="h-12 w-20" aria-hidden="true"><rect x="17" y="11" width="46" height="32" rx="7" fill="currentColor" fillOpacity=".1" stroke="currentColor" strokeWidth="2" /><path d="M26 6V3h12v3m6 0V3h12v3M26 48v3h12v-3m6 0v3h12v-3M11 19H7v16h4m58-16h4v16h-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
             <strong className="text-sm">{table.name}</strong><span className="text-[11px]">{busy(table) ? "Đang sử dụng" : table.status === "reserved" ? "Đã đặt" : "Còn trống"}</span><span className="flex items-center gap-1 text-[10px] opacity-70"><Users className="h-3 w-3" />{table.seats} chỗ</span>

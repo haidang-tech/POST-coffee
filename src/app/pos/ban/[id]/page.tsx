@@ -23,7 +23,7 @@ export default async function OrderPage({
 
   const supabase = await createClient();
 
-  const [orderRes, itemsRes, categoriesRes, menuRes, tablesRes, openRes] = await Promise.all([
+  const [orderRes, itemsRes, categoriesRes, menuRes, boardData] = await Promise.all([
     supabase.from("orders").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("order_items")
@@ -37,17 +37,7 @@ export default async function OrderPage({
       .eq("is_active", true)
       .order("sort_order")
       .order("name"),
-    supabase
-      .from("tables")
-      .select("id, name, status, is_active, areas(name)")
-      .eq("is_active", true)
-      .order("name"),
-    supabase
-      .from("orders")
-      .select("id, code, table_label, total, table_id")
-      .eq("status", "open")
-      .neq("id", id)
-      .order("created_at"),
+    loadBoardData(),
   ]);
 
   if (!orderRes.data) notFound();
@@ -55,19 +45,14 @@ export default async function OrderPage({
   const items = (itemsRes.data ?? []) as OrderItem[];
   const categories = (categoriesRes.data ?? []) as Category[];
   const menuItems = (menuRes.data ?? []) as MenuItem[];
-  const tables = (tablesRes.data ?? []).map((row) => ({
-    id: row.id as string,
-    name: row.name as string,
-    status: row.status as string,
-    areaName:
-      ((row.areas as { name?: string } | null)?.name ?? "Khu vực") as string,
+  const areaNames = new Map(boardData.areas.map((area) => [area.id, area.name]));
+  const tables = boardData.tables.map((table) => ({
+    id: table.id,
+    name: table.name,
+    status: table.status,
+    areaName: areaNames.get(table.area_id ?? "") ?? "Chưa phân khu",
   }));
-  const openOrders = (openRes.data ?? []).map((row) => ({
-    id: row.id as string,
-    code: row.code as string,
-    table_label: row.table_label as string,
-    total: row.total as number,
-  }));
+  const openOrders = boardData.openOrders.filter((entry) => entry.id !== id);
 
   if (order.status !== "open") {
     return (
@@ -153,7 +138,7 @@ export default async function OrderPage({
   return (
     <OrderScreen
       key={order.id}
-      boardData={await loadBoardData()}
+      boardData={boardData}
       order={order}
       items={items}
       categories={categories}

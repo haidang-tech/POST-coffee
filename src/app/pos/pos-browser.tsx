@@ -16,12 +16,13 @@ export function PosBrowser({ data, selectedId, menu, disabled, onSelect, view, o
   const [localView, setLocalView] = useState(params.get("view") === "menu" ? "menu" : "tables");
   const current = view ?? localView;
   const selectView = onView ?? setLocalView;
-  return <section className="pos-browser">
+  return <section className="pos-browser" aria-busy={disabled}>
     <nav className="pos-main-tabs" aria-label="Bán hàng">
       {[{ id: "tables", label: "Phòng bàn", icon: Armchair }, { id: "menu", label: "Thực đơn", icon: BookOpen }, { id: "orders", label: `Đơn đang mở (${data.openOrders.length})`, icon: ReceiptText }].map(({ id, label, icon: Icon }) => <button key={id} aria-pressed={current === id} onClick={() => selectView(id)}><Icon className="h-4 w-4" />{label}</button>)}
     </nav>
+    {disabled && <p role="status" className="shrink-0 border-b border-blue-100 bg-blue-50 px-4 py-2 text-xs text-blue-700">Đang cập nhật dữ liệu…</p>}
     <div className={current === "tables" ? "pos-browser-body" : "hidden"}><TableBoard {...data} selectedId={selectedId} disabled={disabled} onSelect={onSelect} /></div>
-    <div className={current === "menu" ? "pos-menu-scroll" : "hidden"}>{menu}</div>
+    <div className={current === "menu" ? "pos-menu-scroll" : "hidden"}>{current === "menu" ? menu : null}</div>
     <div className={current === "orders" ? "pos-menu-scroll" : "hidden"}>
       <h2 className="mb-4 text-lg font-semibold">Đơn đang mở</h2>
       {!data.openOrders.length && <p className="text-sm text-slate-500">Chưa có đơn đang mở.</p>}

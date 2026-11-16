@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { assertStaff } from "@/lib/auth";
 import { friendlyError } from "@/lib/errors";
@@ -22,7 +23,8 @@ function refresh() {
 
 export async function openTableAction(
   tableId: string,
-): Promise<{ ok: true; orderId: string } | { ok: false; error: string }> {
+): Promise<{ ok: false; error: string }> {
+  let orderId: string;
   try {
     await assertStaff();
     if (!uuid.safeParse(tableId).success) return { ok: false, error: friendlyError("INVALID_INPUT") };
@@ -35,10 +37,13 @@ export async function openTableAction(
 
     if (error) return { ok: false, error: friendlyError(error.message) };
     refresh();
-    return { ok: true, orderId: (data as { id: string }).id };
+    orderId = (data as { id: string }).id;
   } catch (error) {
     return { ok: false, error: friendlyError(error) };
   }
+  // Redirect in the same server action response instead of refreshing the board
+  // and then issuing a second client navigation to fetch the order screen.
+  redirect(`/pos/ban/${orderId}?view=menu`);
 }
 
 export async function setTableStatusAction(

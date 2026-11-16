@@ -1,0 +1,11 @@
+.admin-header { background:#174b86; color:white; box-shadow:0 2px 8px #163c6820; }
+.admin-header .text-mocha-400, .admin-header .text-coffee-700 { color:#e2edfa; }
+.admin-header nav a { color:#dceafb; }
+.admin-header nav a[aria-current="page"] { background:white; color:#2168b3; }
+.admin-header nav a:hover { background:#ffffff20; }
+.admin-header nav a[aria-current="page"]:hover { background:#eff6ff; }
+.admin-sidebar { overflow-y:auto; }
+.admin-shell main .rounded-2xl { border-radius:10px; }
+.admin-shell main .rounded-xl { border-radius:8px; }
+.admin-shell main input, .admin-shell main select { min-height:42px; }
+.admin-shell main table th { background:#f5f7fb; color:#64748b; }

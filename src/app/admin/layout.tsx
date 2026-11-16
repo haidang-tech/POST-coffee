@@ -1,8 +1,11 @@
+import "../workspace-theme.css";
+import "./admin.css";
 import Link from "next/link";
 import { Coffee, LogOut, MonitorPlay } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { signOutAction } from "@/app/login/actions";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { LiveClock } from "@/components/pos/live-clock";
 
 export default async function AdminLayout({
   children,
@@ -12,14 +15,14 @@ export default async function AdminLayout({
   const { profile } = await requireAdmin();
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
-      <aside className="print-hidden sticky top-0 hidden h-dvh flex-col border-r border-cream-200 bg-white px-5 py-8 lg:flex">
+    <div className="admin-shell min-h-dvh lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
+      <aside className="admin-sidebar print-hidden sticky top-0 hidden h-dvh flex-col border-r border-cream-200 bg-white px-4 py-5 lg:flex">
         <Link href="/admin" className="flex items-center gap-2.5 px-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-coffee-800 text-cream-50">
             <Coffee className="h-4 w-4" />
           </span>
           <span className="leading-tight">
-            <span className="block font-display text-[15px] font-semibold tracking-wide">
+            <span className="block text-[15px] font-semibold tracking-wide">
               POST Coffee
             </span>
             <span className="block text-[10px] uppercase tracking-[0.2em] text-mocha-400">
@@ -57,13 +60,17 @@ export default async function AdminLayout({
       </aside>
 
       <div className="min-w-0">
-        <header className="print-hidden sticky top-0 z-30 border-b border-cream-200 bg-white lg:hidden">
+        <div className="admin-header print-hidden sticky top-0 z-30 hidden h-16 items-center justify-between gap-4 px-8 lg:flex">
+          <div><p className="text-sm font-semibold">Quản lý POST Coffee</p><p className="mt-0.5 text-xs text-white/70">{profile.full_name || "Quản trị viên"}</p></div>
+          <div className="flex items-center gap-5"><LiveClock /><Link href="/pos" className="flex min-h-10 items-center gap-2 rounded-lg bg-white/15 px-4 text-xs font-semibold hover:bg-white/25"><MonitorPlay className="h-4 w-4" />Mở quầy bán hàng</Link></div>
+        </div>
+        <header className="admin-header print-hidden sticky top-0 z-30 lg:hidden">
           <div className="flex items-center justify-between px-4 py-3">
             <Link href="/admin" className="flex items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-coffee-800 text-cream-50">
                 <Coffee className="h-3.5 w-3.5" />
               </span>
-              <span className="font-display text-sm font-semibold">POST Coffee</span>
+              <span className="text-sm font-semibold">POST Coffee</span>
             </Link>
             <div className="flex items-center gap-1">
               <Link
